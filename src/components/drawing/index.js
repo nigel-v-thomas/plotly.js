@@ -73,8 +73,6 @@ drawing.translatePoint = function(d, sel, xa, ya, trace) {
     var x = d.xp = xa.c2p(d.x);
     var y = d.yp = ya.c2p(d.y);
 
-    if(!d.mrc)d.mrc = computeMarkerRadius(d, trace);
-
     if(isNumeric(x) && isNumeric(y) && sel.node() &&
        (trace.cliponaxis !== false || xa.isPtWithinRange(d) && ya.isPtWithinRange(d))
     ) {
@@ -245,13 +243,16 @@ function singlePointStyle(d, sel, trace, markerScale, lineScale, marker, markerL
     // only scatter & box plots get marker path and opacity
     // bars, histograms don't
     if(Registry.traceIs(trace, 'symbols')) {
+        var sizeFn = makeBubbleSizeFn(trace);
+
         sel.attr('d', function(d) {
             var r;
 
             // handle multi-trace graph edit case
             if(d.ms === 'various' || marker.size === 'various') r = 3;
             else {
-                r = computeMarkerRadius(d, trace);
+                r = subTypes.isBubble(trace) ?
+                    sizeFn(d.ms) : (marker.size || 6) / 2
             }
 
             // store the calculated size so hover can use it

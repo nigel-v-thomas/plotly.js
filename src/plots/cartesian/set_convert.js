@@ -437,21 +437,13 @@ module.exports = function setConvert(ax, fullLayout) {
 
     if(axLetter === 'x') {
         ax.isPtWithinRange = function(d) {
-            var xp = d.xp;
-            var mrc = d.mrc || 0;
-            return (
-                xp + mrc >= ax.c2p(ax.range[0]) &&
-                xp - mrc <= ax.c2p(ax.range[1])
-            );
+            var x = d.x;
+            return x >= ax.range[0] && x <= ax.range[1];
         };
     } else {
         ax.isPtWithinRange = function(d) {
-            var yp = d.yp;
-            var mrc = d.mrc || 0;
-            return (
-                yp - mrc <= ax.c2p(ax.range[0]) &&
-                yp + mrc >= ax.c2p(ax.range[1])
-            );
+            var y = d.y;
+            return y >= ax.range[0] && y <= ax.range[1];
         };
     }
 
