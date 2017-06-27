@@ -21,8 +21,25 @@ var linkTraces = require('./link_traces');
 var polygonTester = require('../../lib/polygon').tester;
 
 module.exports = function plot(gd, plotinfo, cdscatter, transitionOpts, makeOnCompleteCallback) {
+    var i;
+
     var scatterlayer = plotinfo.plot.select('g.scatterlayer');
-    var join = bindData(gd, plotinfo, cdscatter, scatterlayer);
+
+    // Sort the traces, once created, so that the ordering is preserved even when traces
+    // are shown and hidden. This is needed since we're not just wiping everything out
+    // and recreating on every update.
+    var uids = {};
+    for(i = 0; i < cdscatter.length; i++) {
+        uids[cdscatter[i][0].trace.uid] = i;
+    }
+
+    var join = bindData(gd, plotinfo, cdscatter, scatterlayer, uids);
+
+    // After the elements are created but before they've been draw, we have to perform
+    // this extra step of linking the traces. This allows appending of fill layers so that
+    // the z-order of fill layers is correct.
+    linkTraces(gd, plotinfo, cdscatter);
+    createFills(gd, scatterlayer);
 
     var scatterlayerNoClip, cdscatterNoClip, joinNoClip;
 
@@ -30,7 +47,7 @@ module.exports = function plot(gd, plotinfo, cdscatter, transitionOpts, makeOnCo
         scatterlayerNoClip = plotinfo.plotnoclip.select('g.scatterlayer');
         cdscatterNoClip = [];
 
-        for(var i = 0; i < cdscatter.length; i++) {
+        for(i = 0; i < cdscatter.length; i++) {
             var cdi = cdscatter[i];
 
             if(cdi[0].trace.cliponaxis === false) {
@@ -38,15 +55,13 @@ module.exports = function plot(gd, plotinfo, cdscatter, transitionOpts, makeOnCo
             }
         }
 
-        joinNoClip = bindData(gd, plotinfo, cdscatterNoClip, scatterlayerNoClip);
+        joinNoClip = bindData(gd, plotinfo, cdscatterNoClip, scatterlayerNoClip, uids);
     }
 
     // If transition config is provided, then it is only a partial replot and traces not
     // updated are removed.
     var isFullReplot = !transitionOpts;
     var hasTransition = !!transitionOpts && transitionOpts.duration > 0;
-
-    createFills(gd, scatterlayer);
 
     if(hasTransition) {
         var onComplete;
@@ -102,7 +117,7 @@ module.exports = function plot(gd, plotinfo, cdscatter, transitionOpts, makeOnCo
     scatterlayer.selectAll('path:not([d])').remove();
 };
 
-function bindData(gd, plotinfo, cdscatter, layer) {
+function bindData(gd, plotinfo, cdscatter, layer, uids) {
     var selection = layer.selectAll('g.trace');
     var join = selection.data(cdscatter, function(d) { return d[0].trace.uid; });
 
@@ -112,21 +127,6 @@ function bindData(gd, plotinfo, cdscatter, layer) {
             return 'trace scatter trace' + d[0].trace.uid;
         })
         .style('stroke-miterlimit', 2);
-
-    // TODO only have to do for lines, right?
-    //
-    // After the elements are created but before they've been draw, we have to perform
-    // this extra step of linking the traces. This allows appending of fill layers so that
-    // the z-order of fill layers is correct.
-    linkTraces(gd, plotinfo, cdscatter);
-
-    // Sort the traces, once created, so that the ordering is preserved even when traces
-    // are shown and hidden. This is needed since we're not just wiping everything out
-    // and recreating on every update.
-    var uids = {};
-    for(var i = 0; i < cdscatter.length; i++) {
-        uids[cdscatter[i][0].trace.uid] = i;
-    }
 
     layer.selectAll('g.trace').sort(function(a, b) {
         var idx1 = uids[a[0].trace.uid];
@@ -189,12 +189,11 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
         return hasTransition ? selection.transition() : selection;
     }
 
-    var xa = plotinfo.xaxis,
-        ya = plotinfo.yaxis;
-
-    var trace = cdscatter[0].trace,
-        line = trace.line,
-        tr = d3.select(element);
+    var xa = plotinfo.xaxis;
+    var ya = plotinfo.yaxis;
+    var trace = cdscatter[0].trace;
+    var line = trace.line;
+    var tr = d3.select(element);
 
     // (so error bars can find them along with bars)
     // error bars are at the bottom
@@ -408,9 +407,7 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
         trace._prevPolygons = thisPolygons;
     }
 
-    if(cdscatter[0].trace.cliponaxis !== false) {
-        plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition);
-    }
+    plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition);
 }
 
 function plotOneNoClip(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transitionOpts) {
@@ -425,7 +422,10 @@ function plotOneNoClip(gd, idx, plotinfo, cdscatter, cdscatterAll, element, tran
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
 
-    // TODO ???
+    // add class to make ErrorBars.plot and plotPoints
+    // know if we need to add/remove nodes
+    tr.classed('noclip', true);
+
     tr.call(ErrorBars.plot, plotinfo, transitionOpts);
 
     if(trace.visible !== true) return;
@@ -467,12 +467,14 @@ function plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition) {
             markerFilter = hideFilter,
             textFilter = hideFilter;
 
-        if(showMarkers) {
-            markerFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
-        }
+        if(trace.cliponaxis === !tr.classed('noclip')) {
+            if(showMarkers) {
+                markerFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
+            }
 
-        if(showText) {
-            textFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
+            if(showText) {
+                textFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
+            }
         }
 
         // marker points

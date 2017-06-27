@@ -162,6 +162,12 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
                     .selectAll('g.trace')
                     .remove();
             }
+
+            if(subplotInfo.plotnoclip) {
+                subplotInfo.plotnoclip.select('g.scatterlayer')
+                    .selectAll('g.trace')
+                    .remove();
+            }
         }
 
         oldFullLayout._infolayer.selectAll('g.rangeslider-container')
