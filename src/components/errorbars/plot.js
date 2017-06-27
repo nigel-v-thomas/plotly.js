@@ -14,11 +14,11 @@ var isNumeric = require('fast-isnumeric');
 
 var subTypes = require('../../traces/scatter/subtypes');
 
-module.exports = function plot(traces, plotinfo, transitionOpts) {
+module.exports = function plot(traces, plotinfo, transitionOpts, clipOnAxis) {
     var isNew;
 
-    var xa = plotinfo.xaxis,
-        ya = plotinfo.yaxis;
+    var xa = plotinfo.xaxis;
+    var ya = plotinfo.yaxis;
 
     var hasAnimation = transitionOpts && transitionOpts.duration > 0;
 
@@ -47,7 +47,7 @@ module.exports = function plot(traces, plotinfo, transitionOpts) {
         if(!yObj.visible && !xObj.visible) return;
 
         var errorbars = tr.selectAll('g.errorbar')
-            .data(trace.cliponaxis === !tr.classed('noclip') ? d : [], keyFunc);
+            .data(trace.cliponaxis === clipOnAxis ? d : [], keyFunc);
 
         errorbars.exit().remove();
 

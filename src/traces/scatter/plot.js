@@ -195,9 +195,16 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
     var line = trace.line;
     var tr = d3.select(element);
 
+    // Option passed to errorbar and marker/text renderers:
+    // if 'cliponaxis' is undefined in full trace at this stage,
+    // it means that the callee does not support `cliponaxis: false`,
+    // hence the renderers don't need to worry about which layer
+    // (e.g. plot vs plotnoclip) they're plotting in.
+    var clipOnAxis = trace.cliponaxis === undefined ? undefined : true;
+
     // (so error bars can find them along with bars)
     // error bars are at the bottom
-    tr.call(ErrorBars.plot, plotinfo, transitionOpts);
+    tr.call(ErrorBars.plot, plotinfo, transitionOpts, clipOnAxis);
 
     if(trace.visible !== true) return;
 
@@ -407,7 +414,7 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
         trace._prevPolygons = thisPolygons;
     }
 
-    plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition);
+    plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition, clipOnAxis);
 }
 
 function plotOneNoClip(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transitionOpts) {
@@ -422,20 +429,16 @@ function plotOneNoClip(gd, idx, plotinfo, cdscatter, cdscatterAll, element, tran
     var xa = plotinfo.xaxis;
     var ya = plotinfo.yaxis;
 
-    // add class to make ErrorBars.plot and plotPoints
-    // know if we need to add/remove nodes
-    tr.classed('noclip', true);
-
-    tr.call(ErrorBars.plot, plotinfo, transitionOpts);
+    tr.call(ErrorBars.plot, plotinfo, transitionOpts, false);
 
     if(trace.visible !== true) return;
 
     transition(tr).style('opacity', trace.opacity);
 
-    plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition);
+    plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition, false);
 }
 
-function plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition) {
+function plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition, clipOnAxis) {
     function visFilter(d) {
         return d.filter(function(v) { return v.vis; });
     }
@@ -467,13 +470,17 @@ function plotPoints(gd, tr, cdscatter, xa, ya, hasTransition, transition) {
             markerFilter = hideFilter,
             textFilter = hideFilter;
 
-        if(trace.cliponaxis === !tr.classed('noclip')) {
+        if(trace.cliponaxis === clipOnAxis) {
             if(showMarkers) {
-                markerFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
+                markerFilter = (trace.marker.maxdisplayed || trace._needsCull) ?
+                    visFilter :
+                    Lib.identity;
             }
 
             if(showText) {
-                textFilter = (trace.marker.maxdisplayed || trace._needsCull) ? visFilter : Lib.identity;
+                textFilter = (trace.marker.maxdisplayed || trace._needsCull) ?
+                    visFilter :
+                    Lib.identity;
             }
         }
 
