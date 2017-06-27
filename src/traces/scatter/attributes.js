@@ -185,7 +185,8 @@ module.exports = {
         role: 'info',
         editType: 'doplot',
         description: [
-            '...'
+            'Determines whether or not markers, text nodes and errobars',
+            'clipped about the subplot axes.'
         ].join(' ')
     },
 

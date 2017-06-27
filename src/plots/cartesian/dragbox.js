@@ -755,17 +755,17 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 .call(Drawing.setTranslate, plotDx, plotDy)
                 .call(Drawing.setScale, 1 / xScaleFactor2, 1 / yScaleFactor2);
 
-            var scatterLayers = subplot.plotgroup.selectAll('.scatterlayer');
+            var points = subplot.plotgroup
+                .selectAll('.scatterlayer')
+                .selectAll('.points');
 
             // This is specifically directed at scatter traces, applying an inverse
             // scale to individual points to counteract the scale of the trace
             // as a whole:
-            scatterLayers
-                .selectAll('.points').selectAll('.point')
+            points.selectAll('.point')
                 .call(Drawing.setPointGroupScale, xScaleFactor2, yScaleFactor2);
 
-            scatterLayers
-                .selectAll('.points').selectAll('.textpoint')
+            points.selectAll('.textpoint')
                 .call(Drawing.setTextPointsScale, xScaleFactor2, yScaleFactor2);
         }
     }
