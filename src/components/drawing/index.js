@@ -252,7 +252,7 @@ function singlePointStyle(d, sel, trace, markerScale, lineScale, marker, markerL
             if(d.ms === 'various' || marker.size === 'various') r = 3;
             else {
                 r = subTypes.isBubble(trace) ?
-                    sizeFn(d.ms) : (marker.size || 6) / 2
+                        sizeFn(d.ms) : (marker.size || 6) / 2;
             }
 
             // store the calculated size so hover can use it
@@ -339,16 +339,6 @@ function singlePointStyle(d, sel, trace, markerScale, lineScale, marker, markerL
         if(lineWidth) {
             sel.call(Color.stroke, lineColor);
         }
-    }
-}
-
-function computeMarkerRadius(d, trace) {
-    if(subTypes.isBubble(trace)) {
-        var sizeFn = makeBubbleSizeFn(trace);
-        return sizeFn(d.ms);
-    } else {
-        var marker = trace.marker || {};
-        return (marker.size || 6) / 2;
     }
 }
 

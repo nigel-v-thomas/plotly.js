@@ -183,7 +183,6 @@ proto.adjustLayout = function(ternaryLayout, graphSize) {
     setConvert(_this.xaxis, _this.graphDiv._fullLayout);
     _this.xaxis.setScale();
     _this.xaxis.isPtWithinRange = function(d) {
-        // TODO should we include marker.size?
         return (
             d.a >= _this.aaxis.range[0] &&
             d.a <= _this.aaxis.range[1] &&
