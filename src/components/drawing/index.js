@@ -69,8 +69,8 @@ drawing.setRect = function(s, x, y, w, h) {
  */
 drawing.translatePoint = function(d, sel, xa, ya) {
     // put xp and yp into d if pixel scaling is already done
-    var x = d.xp || xa.c2p(d.x),
-        y = d.yp || ya.c2p(d.y);
+    var x = d.xp = xa.c2p(d.x);
+    var y = d.yp = ya.c2p(d.y);
 
     if(isNumeric(x) && isNumeric(y) && sel.node()) {
         // for multiline text this works better
@@ -86,10 +86,28 @@ drawing.translatePoint = function(d, sel, xa, ya) {
     return true;
 };
 
-drawing.translatePoints = function(s, xa, ya, trace) {
+drawing.translatePoints = function(s, xa, ya) {
     s.each(function(d) {
         var sel = d3.select(this);
-        drawing.translatePoint(d, sel, xa, ya, trace);
+        drawing.translatePoint(d, sel, xa, ya);
+    });
+};
+
+drawing.hideOutsideRangePoint = function(d, sel, xa, ya) {
+    sel.attr(
+        'visibility',
+        xa.isPtWithinRange(d) && ya.isPtWithinRange(d) ? null : 'hidden'
+    );
+};
+
+drawing.hideOutsideRangePoints = function(points, subplot) {
+    if(!subplot._hasClipOnAxisFalse) return;
+
+    var xa = subplot.xaxis;
+    var ya = subplot.yaxis;
+
+    points.each(function(d) {
+        drawing.hideOutsideRangePoint(d, d3.select(this), xa, ya);
     });
 };
 

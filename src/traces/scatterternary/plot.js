@@ -15,7 +15,7 @@ var scatterPlot = require('../scatter/plot');
 module.exports = function plot(ternary, moduleCalcData) {
     var plotContainer = ternary.plotContainer;
 
-    // remove all nodes inside the scatter layer
+    // remove all nodes inside the scatter layers
     plotContainer.select('.scatterlayer').selectAll('*').remove();
 
     // mimic cartesian plotinfo

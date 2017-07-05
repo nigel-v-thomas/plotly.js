@@ -46,9 +46,19 @@ proto.init = function(fullLayout) {
 };
 
 proto.plot = function(ternaryCalcData, fullLayout) {
-    var _this = this,
-        ternaryLayout = fullLayout[_this.id],
-        graphSize = fullLayout._size;
+    var _this = this;
+    var ternaryLayout = fullLayout[_this.id];
+    var graphSize = fullLayout._size;
+
+    _this._hasClipOnAxisFalse = false;
+    for(var i = 0; i < ternaryCalcData.length; i++) {
+        var trace = ternaryCalcData[i][0].trace;
+
+        if(trace.cliponaxis === false) {
+            _this._hasClipOnAxisFalse = true;
+            break;
+        }
+    }
 
     _this.adjustLayout(ternaryLayout, graphSize);
 
@@ -66,7 +76,7 @@ proto.makeFramework = function() {
         .classed('clips', true);
 
     // clippath for this ternary subplot
-    var clipId = 'clip' + _this.layoutId + _this.id;
+    var clipId = _this.clipId = 'clip' + _this.layoutId + _this.id;
     _this.clipDef = defGroup.selectAll('#' + clipId)
         .data([0]);
     _this.clipDef.enter().append('clipPath').attr('id', clipId)
@@ -120,7 +130,7 @@ proto.makeFramework = function() {
         .attr('class', function(d) { return 'grid ' + d; })
         .each(function(d) { _this.layers[d] = d3.select(this); });
 
-    _this.plotContainer.selectAll('.backplot,.frontplot,.grids')
+    _this.plotContainer.selectAll('.backplot,.grids')
         .call(Drawing.setClipUrl, clipId);
 };
 
@@ -175,6 +185,16 @@ proto.adjustLayout = function(ternaryLayout, graphSize) {
     };
     setConvert(_this.xaxis, _this.graphDiv._fullLayout);
     _this.xaxis.setScale();
+    _this.xaxis.isPtWithinRange = function(d) {
+        return (
+            d.a >= _this.aaxis.range[0] &&
+            d.a <= _this.aaxis.range[1] &&
+            d.b >= _this.baxis.range[1] &&
+            d.b <= _this.baxis.range[0] &&
+            d.c >= _this.caxis.range[1] &&
+            d.c <= _this.caxis.range[0]
+        );
+    };
 
     _this.yaxis = {
         type: 'linear',
@@ -187,6 +207,7 @@ proto.adjustLayout = function(ternaryLayout, graphSize) {
     };
     setConvert(_this.yaxis, _this.graphDiv._fullLayout);
     _this.yaxis.setScale();
+    _this.yaxis.isPtWithinRange = function() { return true; };
 
     // set up the modified axes for tick drawing
     var yDomain0 = _this.yaxis.domain[0];
@@ -302,6 +323,9 @@ proto.adjustLayout = function(ternaryLayout, graphSize) {
     if(!_this.graphDiv._context.staticPlot) {
         _this.initInteractions();
     }
+
+    _this.plotContainer.select('.frontplot')
+        .call(Drawing.setClipUrl, _this._hasClipOnAxisFalse ? null : _this.clipId);
 };
 
 proto.drawAxes = function(doTitles) {
@@ -589,6 +613,16 @@ proto.initInteractions = function() {
 
         _this.drawAxes(false);
         _this.plotContainer.selectAll('.crisp').classed('crisp', false);
+
+        if(_this._hasClipOnAxisFalse) {
+            var scatterPoints = _this.plotContainer.select('.scatterlayer').selectAll('.points')
+
+            scatterPoints.selectAll('.point')
+                .call(Drawing.hideOutsideRangePoints, _this);
+
+            scatterPoints.selectAll('.textpoint')
+                .call(Drawing.hideOutsideRangePoints, _this);
+        }
     }
 
     function dragDone(dragged, numClicks) {
