@@ -324,9 +324,6 @@ function makeSubplotLayer(plotinfo) {
         plotinfo.zerolinelayer = joinLayer(plotgroup, 'g', 'zerolinelayer');
         plotinfo.overzero = joinLayer(plotgroup, 'g', 'overzero');
 
-        plotinfo.plot = joinLayer(plotgroup, 'g', 'plot');
-        plotinfo.overplot = joinLayer(plotgroup, 'g', 'overplot');
-
         plotinfo.xlines = joinLayer(plotgroup, 'path', 'xlines');
         plotinfo.ylines = joinLayer(plotgroup, 'path', 'ylines');
         plotinfo.overlines = joinLayer(plotgroup, 'g', 'overlines');
@@ -334,6 +331,9 @@ function makeSubplotLayer(plotinfo) {
         plotinfo.xaxislayer = joinLayer(plotgroup, 'g', 'xaxislayer');
         plotinfo.yaxislayer = joinLayer(plotgroup, 'g', 'yaxislayer');
         plotinfo.overaxes = joinLayer(plotgroup, 'g', 'overaxes');
+
+        plotinfo.plot = joinLayer(plotgroup, 'g', 'plot');
+        plotinfo.overplot = joinLayer(plotgroup, 'g', 'overplot');
     }
     else {
         var mainplotinfo = plotinfo.mainplotinfo;
@@ -346,11 +346,12 @@ function makeSubplotLayer(plotinfo) {
         plotinfo.gridlayer = joinLayer(mainplotinfo.overgrid, 'g', id);
         plotinfo.zerolinelayer = joinLayer(mainplotinfo.overzero, 'g', id);
 
-        plotinfo.plot = joinLayer(mainplotinfo.overplot, 'g', id);
         plotinfo.xlines = joinLayer(mainplotinfo.overlines, 'path', id);
         plotinfo.ylines = joinLayer(mainplotinfo.overlines, 'path', id);
         plotinfo.xaxislayer = joinLayer(mainplotinfo.overaxes, 'g', id);
         plotinfo.yaxislayer = joinLayer(mainplotinfo.overaxes, 'g', id);
+
+        plotinfo.plot = joinLayer(mainplotinfo.overplot, 'g', id);
     }
 
     // common attributes for all subplots, overlays or not
